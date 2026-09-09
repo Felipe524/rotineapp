@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskMaster — Organize suas tarefas, controle seus gastos</title>
+<style>
+:root{
+  --bg:#f3f7fc; --surface:#fff; --surface2:#eef5fb; --text:#12233f; --muted:#70809a;
+  --primary:#149eea; --primary2:#6546f5; --border:#dce8f4; --danger:#ef3e45; --success:#16b98d;
+  --shadow:0 12px 35px rgba(30,80,130,.12);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer;border:0}
+.app{min-height:100vh;display:flex}
+.sidebar{width:250px;background:var(--surface);border-right:1px solid var(--border);padding:24px 16px;position:fixed;inset:0 auto 0 0;z-index:20}
+.brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:22px;margin:4px 8px 30px}
+.logo{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,#12a9ee,#6043f5);display:grid;place-items:center;color:white;font-size:25px}
+.brand span{background:linear-gradient(90deg,#109eea,#6546f5);color:transparent;background-clip:text}
+.nav{display:grid;gap:7px}
+.nav button{padding:12px 14px;border-radius:12px;background:transparent;color:var(--muted);text-align:left;display:flex;gap:12px;align-items:center}
+.nav button:hover,.nav button.active{background:linear-gradient(90deg,#e5f6ff,#f0ecff);color:#168fe0;font-weight:700}
+.bottom-nav{position:absolute;bottom:22px;left:16px;right:16px}
+.content{margin-left:250px;width:calc(100% - 250px);padding:28px 34px}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.title h1{margin:0;font-size:28px}.title p{margin:5px 0;color:var(--muted)}
+.actions{display:flex;gap:10px;align-items:center}
+.iconbtn{width:42px;height:42px;border-radius:12px;background:var(--surface);border:1px solid var(--border);color:var(--text)}
+.primary{background:linear-gradient(90deg,#0ea8ed,#6546f5);color:#fff;padding:12px 18px;border-radius:12px;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px;box-shadow:var(--shadow)}
+.stat{min-height:115px}.stat small{color:var(--muted)}.stat strong{font-size:25px;display:block;margin:9px 0}.stat .mini{font-size:12px;color:var(--success)}
+.layout{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;margin-top:18px}
+.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.section-head h2{font-size:18px;margin:0}
+.task{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--border)}
+.task:last-child{border-bottom:0}.check{width:23px;height:23px;border-radius:50%;border:2px solid #9ab0c9;background:transparent;color:white}.check.done{background:#18b994;border-color:#18b994}.task-main{flex:1}.task-main b{display:block}.task-main small{color:var(--muted)}
+.badge{padding:5px 9px;border-radius:20px;background:#e9f8ff;color:#148fd0;font-size:11px}
+.progress{height:9px;background:var(--surface2);border-radius:20px;overflow:hidden}.progress i{display:block;height:100%;background:linear-gradient(90deg,#12a9ee,#6546f5);border-radius:20px}
+.chart{height:220px;display:flex;align-items:end;gap:12px;padding:20px 10px 5px}.bar{flex:1;background:linear-gradient(#13a9ee,#6746f5);border-radius:8px 8px 2px 2px;min-height:25px;position:relative}.bar span{position:absolute;bottom:-22px;width:100%;text-align:center;font-size:11px;color:var(--muted)}
+.page{display:none}.page.active{display:block}
+.filters{display:flex;gap:8px;margin-bottom:14px}.filter{padding:9px 13px;border-radius:20px;background:var(--surface2);color:var(--muted)}.filter.active{background:#16a5eb;color:white}
+.list-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:8px 18px}
+.form{max-width:720px}.form label{display:block;font-weight:700;font-size:13px;margin:14px 0 6px}.form input,.form select,.form textarea{width:100%;padding:12px;border:1px solid var(--border);border-radius:11px;background:var(--surface);color:var(--text);outline:none}.form textarea{min-height:110px;resize:vertical}
+.form-actions{display:flex;gap:10px;margin-top:18px}.secondary{background:var(--surface2);color:var(--text);padding:12px 18px;border-radius:12px}
+.profile{display:flex;gap:18px;align-items:center}.avatar{width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,#14a9ed,#6546f5);color:white;display:grid;place-items:center;font-weight:800;font-size:25px}
+.setting{display:flex;justify-content:space-between;align-items:center;padding:15px 0;border-bottom:1px solid var(--border)}.setting:last-child{border:0}
+.toggle{width:48px;height:27px;background:#b9c7d5;border-radius:20px;padding:3px}.toggle i{display:block;width:21px;height:21px;background:white;border-radius:50%;transition:.2s}.toggle.on{background:#12a7eb}.toggle.on i{transform:translateX(21px)}
+.toast{position:fixed;right:25px;bottom:25px;background:#12233f;color:white;padding:13px 18px;border-radius:12px;opacity:0;transform:translateY(15px);transition:.25s;z-index:100}.toast.show{opacity:1;transform:none}
+.modal{position:fixed;inset:0;background:rgba(8,22,40,.5);display:none;place-items:center;z-index:80;padding:20px}.modal.show{display:grid}.modal-box{background:var(--surface);border-radius:20px;padding:22px;width:min(480px,100%)}
+.empty{text-align:center;color:var(--muted);padding:35px}
+@media(max-width:900px){.sidebar{width:78px;padding:20px 10px}.brand span,.nav button span,.bottom-nav{display:none}.brand{margin:0 7px 30px}.content{margin-left:78px;width:calc(100% - 78px);padding:20px}.grid{grid-template-columns:repeat(2,1fr)}.layout{grid-template-columns:1fr}}
+@media(max-width:600px){.sidebar{display:none}.content{margin:0;width:100%;padding:15px}.grid{grid-template-columns:1fr 1fr}.topbar{align-items:flex-start}.title h1{font-size:22px}.primary{padding:10px 12px}.layout{grid-template-columns:1fr}.actions .iconbtn{display:none}}
+body.dark{--bg:#07111d;--surface:#0d1b2a;--surface2:#13283b;--text:#e8f2ff;--muted:#91a7bc;--border:#1d354b;--shadow:0 12px 35px rgba(0,0,0,.25)}
+body.dark .nav button:hover,body.dark .nav button.active{background:#102d43}
+body.dark .logo{box-shadow:0 0 25px rgba(31,154,240,.2)}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand"><div class="logo">✓</div><span>TaskMaster</span></div>
+  <nav class="nav">
+    <button class="active" onclick="go('home',this)">⌂ <span>Início</span></button>
+    <button onclick="go('tasks',this)">✓ <span>Tarefas</span></button>
+    <button onclick="go('expenses',this)">＄ <span>Despesas</span></button>
+    <button onclick="go('reports',this)">▥ <span>Relatórios</span></button>
+    <button onclick="go('profile',this)">◯ <span>Perfil</span></button>
+    <button onclick="go('settings',this)">⚙ <span>Configurações</span></button>
+    <button onclick="go('notifications',this)">♧ <span>Notificações</span></button>
+  </nav>
+</aside>
+
+<main class="content">
+<header class="topbar">
+  <div class="title"><h1 id="pageTitle">Olá, Felipe!</h1><p id="pageSubtitle">Que bom ter você por aqui!</p></div>
+  <div class="actions"><button class="iconbtn" onclick="toggleDark()" title="Modo escuro">☾</button><button class="iconbtn" onclick="go('notifications')">♧</button><button class="primary" onclick="openTask()">＋ Nova tarefa</button></div>
+</header>
+
+<section id="home" class="page active">
+<div class="grid">
+ <div class="card stat"><small>Tarefas hoje</small><strong id="taskStat">4/8</strong><span class="mini">↑ 12% esta semana</span></div>
+ <div class="card stat"><small>Despesas hoje</small><strong id="expenseStat">R$ 120,00</strong><span class="mini">Dentro do planejado</span></div>
+ <div class="card stat"><small>Tarefas concluídas</small><strong>72%</strong><div class="progress"><i style="width:72%"></i></div></div>
+ <div class="card stat"><small>Total de despesas</small><strong id="totalStat">R$ 1.284,50</strong><span class="mini">↓ 8% no mês</span></div>
+</div>
+<div class="layout">
+ <div class="card"><div class="section-head"><h2>Minhas tarefas</h2><button class="secondary" onclick="go('tasks')">Ver todas</button></div><div id="homeTasks"></div></div>
+ <div class="card"><div class="section-head"><h2>Resumo financeiro</h2><button class="secondary" onclick="go('reports')">Relatório</button></div><p style="color:var(--muted)">Gastos deste mês</p><h2 id="monthTotal">R$ 1.284,50</h2><div class="chart"><div class="bar" style="height:45%"><span>Jan</span></div><div class="bar" style="height:58%"><span>Fev</span></div><div class="bar" style="height:40%"><span>Mar</span></div><div class="bar" style="height:70%"><span>Abr</span></div><div class="bar" style="height:52%"><span>Mai</span></div><div class="bar" style="height:82%"><span>Jun</span></div></div></div>
+</div>
+</section>
+
+<section id="tasks" class="page">
+<div class="filters"><button class="filter active" onclick="filterTasks('all',this)">Todas</button><button class="filter" onclick="filterTasks('pending',this)">Pendentes</button><button class="filter" onclick="filterTasks('done',this)">Concluídas</button></div>
+<div class="list-card" id="taskList"></div>
+</section>
+
+<section id="expenses" class="page">
+<div class="filters"><button class="filter active">Todas</button><button class="filter">Fixas</button><button class="filter">Variáveis</button><button class="primary" onclick="openExpense()">＋ Nova despesa</button></div>
+<div class="list-card" id="expenseList"></div>
+</section>
+
+<section id="reports" class="page">
+<div class="grid"><div class="card stat"><small>Despesas no mês</small><strong id="reportTotal">R$ 1.284,50</strong></div><div class="card stat"><small>Maior categoria</small><strong>Alimentação</strong><span>35%</span></div><div class="card stat"><small>Economia</small><strong>R$ 315,50</strong><span class="mini">+14%</span></div><div class="card stat"><small>Meta mensal</small><strong>68%</strong><div class="progress"><i style="width:68%"></i></div></div></div>
+<div class="layout"><div class="card"><div class="section-head"><h2>Despesas por categoria</h2></div><div class="chart"><div class="bar" style="height:85%"><span>Alim.</span></div><div class="bar" style="height:52%"><span>Trans.</span></div><div class="bar" style="height:36%"><span>Lazer</span></div><div class="bar" style="height:28%"><span>Casa</span></div><div class="bar" style="height:20%"><span>Outros</span></div></div></div><div class="card"><h2>Evolução de gastos</h2><p style="color:var(--muted)">Você está gastando menos que no mês anterior.</p><div class="progress" style="height:16px"><i style="width:62%"></i></div><p><b>62%</b> da meta utilizada</p></div></div>
+</section>
+
+<section id="profile" class="page"><div class="card form"><div class="profile"><div class="avatar">FM</div><div><h2 style="margin:0">Felipe Martins</h2><p style="color:var(--muted)">felipe@email.com</p></div></div><label>Nome</label><input value="Felipe Martins"><label>E-mail</label><input value="felipe@email.com"><label>Telefone</label><input value="(00) 00000-0000"><div class="form-actions"><button class="primary" onclick="toast('Perfil atualizado!')">Salvar alterações</button></div></div></section>
+
+<section id="settings" class="page"><div class="card"><div class="setting"><div><b>Modo escuro</b><small style="display:block;color:var(--muted)">Alternar aparência do aplicativo</small></div><button id="darkToggle" class="toggle" onclick="toggleDark()"><i></i></button></div><div class="setting"><div><b>Notificações</b><small style="display:block;color:var(--muted)">Receber avisos importantes</small></div><button class="toggle on" onclick="toggleSwitch(this)"><i></i></button></div><div class="setting"><div><b>Lembretes</b><small style="display:block;color:var(--muted)">Avisar sobre tarefas próximas</small></div><button class="toggle on" onclick="toggleSwitch(this)"><i></i></button></div><div class="setting"><div><b>Som</b></div><button class="toggle on" onclick="toggleSwitch(this)"><i></i></button></div><div class="setting"><div><b>Idioma</b><small style="display:block;color:var(--muted)">Português</small></div><span>›</span></div><div class="setting"><div><b>Sobre o app</b><small style="display:block;color:var(--muted)">TaskMaster v1.0.0</small></div><span>›</span></div></div></section>
+
+<section id="notifications" class="page"><div class="list-card"><div class="task"><div class="avatar" style="width:40px;height:40px;font-size:16px">✓</div><div class="task-main"><b>Lembrete de tarefa</b><small>Estudar para a prova · Hoje 10:00</small></div></div><div class="task"><div class="avatar" style="width:40px;height:40px;font-size:16px">R$</div><div class="task-main"><b>Despesa registrada</b><small>Mercado · R$ 320,00 · Hoje</small></div></div><div class="task"><div class="avatar" style="width:40px;height:40px;font-size:16px">!</div><div class="task-main"><b>Meta do mês</b><small>Você já utilizou 68% da sua meta.</small></div></div></div></section>
+</main>
+</div>
+
+<div class="modal" id="modal"><div class="modal-box"><div class="section-head"><h2 id="modalTitle">Nova tarefa</h2><button class="iconbtn" onclick="closeModal()">×</button></div><div class="form"><label>Título</label><input id="mTitle" placeholder="Digite o título"><label>Descrição</label><textarea id="mDesc" placeholder="Opcional"></textarea><label>Data</label><input id="mDate" type="date"><label>Categoria</label><select id="mCat"><option>Trabalho</option><option>Estudos</option><option>Pessoal</option><option>Casa</option></select><div class="form-actions"><button class="secondary" onclick="closeModal()">Cancelar</button><button class="primary" onclick="saveTask()">Salvar</button></div></div></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+let tasks=[
+ {title:"Estudar para a prova",date:"Hoje · 10:00",cat:"Estudos",done:false},
+ {title:"Desenvolver o projeto",date:"Hoje · 14:00",cat:"Trabalho",done:false},
+ {title:"Academia",date:"Amanhã · 08:00",cat:"Pessoal",done:true},
+ {title:"Ler um livro",date:"Qui · 19:00",cat:"Pessoal",done:false},
+ {title:"Organizar o quarto",date:"Sáb · 09:00",cat:"Casa",done:false}
+];
+let expenses=[
+ {name:"Mercado",cat:"Alimentação",value:320,date:"Hoje"},
+ {name:"Transporte",cat:"Transporte",value:60,date:"Ontem"},
+ {name:"Internet",cat:"Casa",value:99.90,date:"06/09"},
+ {name:"Lazer",cat:"Lazer",value:150,date:"07/09"},
+ {name:"Alimentação",cat:"Alimentação",value:85.50,date:"08/09"}
+];
+function go(id,btn){
+ document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+ document.getElementById(id).classList.add('active');
+ document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));
+ if(btn)btn.classList.add('active');
+ const names={home:["Olá, Felipe!","Que bom ter você por aqui!"],tasks:["Tarefas","Organize suas atividades"],expenses:["Despesas","Controle seus gastos"],reports:["Relatórios","Acompanhe seu desempenho"],profile:["Perfil","Gerencie suas informações"],settings:["Configurações","Personalize o TaskMaster"],notifications:["Notificações","Fique por dentro das novidades"]};
+ document.getElementById('pageTitle').textContent=names[id][0];document.getElementById('pageSubtitle').textContent=names[id][1];
+ if(id==='tasks')renderTasks(); if(id==='expenses')renderExpenses();
+}
+function renderTasks(filter='all'){
+ const el=document.getElementById('taskList'), home=document.getElementById('homeTasks');
+ const arr=filter==='done'?tasks.filter(t=>t.done):filter==='pending'?tasks.filter(t=>!t.done):tasks;
+ const html=arr.length?arr.map((t,i)=>taskHTML(t,tasks.indexOf(t))).join(''):'<div class="empty">Nenhuma tarefa encontrada.</div>';
+ el.innerHTML=html;
+ home.innerHTML=tasks.slice(0,4).map((t,i)=>taskHTML(t,i)).join('');
+ document.getElementById('taskStat').textContent=`${tasks.filter(t=>t.done).length}/8`;
+}
+function taskHTML(t,i){return `<div class="task"><button class="check ${t.done?'done':''}" onclick="completeTask(${i})">${t.done?'✓':''}</button><div class="task-main"><b>${t.title}</b><small>${t.date} · ${t.cat}</small></div><span class="badge">${t.done?'Concluída':'Pendente'}</span><button class="iconbtn" style="width:34px;height:34px" onclick="deleteTask(${i})">×</button></div>`}
+function completeTask(i){tasks[i].done=!tasks[i].done;renderTasks();toast(tasks[i].done?'Tarefa concluída!':'Tarefa reaberta!')}
+function deleteTask(i){tasks.splice(i,1);renderTasks();toast('Tarefa excluída!')}
+function filterTasks(type,btn){document.querySelectorAll('#tasks .filter').forEach(x=>x.classList.remove('active'));btn.classList.add('active');renderTasks(type)}
+function openTask(){document.getElementById('modalTitle').textContent='Nova tarefa';document.getElementById('modal').classList.add('show');document.getElementById('mTitle').value='';document.getElementById('mDesc').value=''}
+function closeModal(){document.getElementById('modal').classList.remove('show')}
+function saveTask(){let title=document.getElementById('mTitle').value.trim();if(!title){toast('Digite um título.');return}tasks.unshift({title,date:document.getElementById('mDate').value||'Hoje · 10:00',cat:document.getElementById('mCat').value,done:false});closeModal();renderTasks();toast('Tarefa criada com sucesso!')}
+function openExpense(){let n=prompt('Nome da despesa:');if(!n)return;let v=parseFloat(prompt('Valor:')||'0');if(!v)return;expenses.unshift({name:n,cat:'Outros',value:v,date:'Hoje'});renderExpenses();toast('Despesa adicionada!')}
+function renderExpenses(){document.getElementById('expenseList').innerHTML=expenses.map((e,i)=>`<div class="task"><div class="avatar" style="width:40px;height:40px;font-size:14px">${e.cat[0]}</div><div class="task-main"><b>${e.name}</b><small>${e.cat} · ${e.date}</small></div><strong>R$ ${e.value.toFixed(2).replace('.',',')}</strong><button class="iconbtn" style="width:34px;height:34px" onclick="expenses.splice(${i},1);renderExpenses();toast('Despesa excluída!')">×</button></div>`).join('')}
+function toggleDark(){document.body.classList.toggle('dark');document.getElementById('darkToggle')?.classList.toggle('on',document.body.classList.contains('dark'));localStorage.setItem('dark',document.body.classList.contains('dark'))}
+function toggleSwitch(el){el.classList.toggle('on');toast(el.classList.contains('on')?'Ativado':'Desativado')}
+function toast(msg){let t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(window.tt);window.tt=setTimeout(()=>t.classList.remove('show'),2200)}
+if(localStorage.getItem('dark')==='true')document.body.classList.add('dark');
+renderTasks();renderExpenses();
+</script>
+</body>
+</html>
